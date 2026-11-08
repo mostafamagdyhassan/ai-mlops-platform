@@ -1,0 +1,40 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-model
+  namespace: ai-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomaly-model
+  template:
+    metadata:
+      labels:
+        app: anomaly-model
+    spec:
+      containers:
+        - name: model
+          image: ai-mlops-platform-ml:latest
+          ports:
+            - containerPort: 8001
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomaly-model
+  namespace: ai-platform
+spec:
+  selector:
+    app: anomaly-model
+  ports:
+    - port: 8001
+      targetPort: 8001
