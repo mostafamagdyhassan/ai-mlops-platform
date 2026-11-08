@@ -1,0 +1,100 @@
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "ai-mlops-platform-api"
+        DOCKER_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    python3 -m pip install -e ".[dev]"
+                '''
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh 'ruff check .'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'pytest -q'
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    trivy fs \
+                      --severity HIGH,CRITICAL \
+                      --exit-code 1 \
+                      .
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh """
+                    docker build \
+                      -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                """
+            }
+        }
+
+        stage('Docker Image Scan') {
+            steps {
+                sh """
+                    trivy image \
+                      --severity HIGH,CRITICAL \
+                      --exit-code 1 \
+                      ${IMAGE_NAME}:${DOCKER_TAG}
+                """
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Approve deployment to Kubernetes?'
+
+                sh """
+                    helm upgrade --install aiops-platform \
+                      deployment/helm/aiops-platform \
+                      --namespace ai-platform \
+                      --create-namespace \
+                      --set image.tag=${DOCKER_TAG}
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check the stage logs.'
+        }
+    }
+}
