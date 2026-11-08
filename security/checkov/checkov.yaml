@@ -1,0 +1,14 @@
+
+framework:
+  - terraform
+
+compact: true
+quiet: false
+
+skip-path:
+  - .terraform
+  - .git
+  - .venv
+
+download-external-modules: true
+evaluate-variables: true
