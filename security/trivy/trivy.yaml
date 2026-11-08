@@ -1,0 +1,19 @@
+
+scan:
+  skip-dirs:
+    - .git
+    - .venv
+    - mlruns
+    - artifacts
+
+severity:
+  - CRITICAL
+  - HIGH
+
+exit-code: 1
+
+misconfiguration:
+  include-non-failures: false
+
+secret:
+  config: security/trivy/trivy-secret.yaml
