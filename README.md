@@ -123,13 +123,6 @@ Start the platform:
 docker compose up --build
 ```
 
-API documentation:
-
-http://localhost:8000/docs
-
-Health endpoint:
-
-http://localhost:8000/health
 
 ## Development Roadmap
 
